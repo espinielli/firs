@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js" type="text/javascript"></script>
+<link href="fir.css" rel="stylesheet">
+
+<script src="firs.js"></script>
+
+<div id="tooltip" class="hidden">
+    <p id="countryname"></p>
+</div><div id="chart"></div>
+
+<script type="text/javascript">
+(function () {
+
+  // general design from
+  // http://www.jeromecukier.net/blog/2013/11/20/getting-beyond-hello-world-with-d3/
+  var params = {
+    refresh: false, // REMOVE, i.e. `false`, for production
+  	width: 960,
+  	height:600,
+  	scale: 550,
+    geo: "topo/ectrlfirs.json",
+  	world: "topo/world-50m.json",
+  	worldnames: "data/world-country-names.tsv"
+  };
+
+  var query = window.location.search.substring(1);
+  var vars = query.split("&");
+  vars.forEach(function(v) {
+      var p = v.split("=");
+      params[p[0]] = p[1];
+  })
+  vis.init(params);
+}());
+</script>
