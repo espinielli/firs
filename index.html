@@ -23,8 +23,8 @@
     refresh: false, // REMOVE, i.e. `false`, for production
   	width: 960,
   	height:600,
-  	scale: 550,
-    geo: "topo/ectrlfirs.json",
+  	scale: 50,
+    topo: "topo/FIRs_NM.json",
   	world: "topo/world-50m.json",
   	worldnames: "data/world-country-names.tsv"
   };
@@ -35,6 +35,7 @@
       var p = v.split("=");
       params[p[0]] = p[1];
   })
+  console.log("params: " + JSON.stringify(params));
   vis.init(params);
 }());
 </script>

@@ -136,13 +136,12 @@ var d3, queue, vis, params, topojson;
     // general design from
     // http://www.jeromecukier.net/blog/2013/11/20/getting-beyond-hello-world-with-d3/
     vis.init = function (params) {
-        if (!params) {
-            params = {};
-        }
+        console.log("in init, params: " + JSON.stringify(params));
+        var pars = params || {};
 
-        chart = d3.select(params.chart || "#chart"); // placeholder div for svg
-        width = params.width || 960;
-        height = params.height || 500;
+        chart = d3.select(pars.chart || "#chart"); // placeholder div for svg
+        width = pars.width || 960;
+        height = pars.height || 500;
         active = d3.select(null);
 
         svg = chart.selectAll("svg")
@@ -189,13 +188,13 @@ var d3, queue, vis, params, topojson;
             slider.on("change", function () {
                 vis.stop();
                 step = this.value;
-                vis.draw(params);
+                vis.draw(pars);
             });
-            running = params.running || 0; // autorunning off or manually set on
+            running = pars.running || 0; // autorunning off or manually set on
         } else {
             running = -1; // never attempt auto-running
         }
-        button = d3.select(params.button || ".button");
+        button = d3.select(pars.button || ".button");
         if (button[0][0] && running > -1) {
             button.on("click", function () {
                 if (running) {
@@ -206,7 +205,7 @@ var d3, queue, vis, params, topojson;
             });
         }
 
-        vis.loaddata(params);
+        vis.loaddata(pars);
     };
 
     function ready(error, firs, world, wnames) {
@@ -225,16 +224,17 @@ var d3, queue, vis, params, topojson;
     }
 
     vis.loaddata = function (params) {
+        console.log("in loaddata, params: " + JSON.stringify(params));
         if (!params) { params = {}; }
 
         // if `params.refresh` is set/true forces the browser to reload the file
         // and not use the cached version due to URL being different (but the filename is the same)
-        var geo = (params.geo || "ectrlfirs.json") + (params.refresh ? ("#" + Math.random()) : "");
+        var topo = (params.topo || "ectrlfirs.json") + (params.refresh ? ("#" + Math.random()) : "");
         var world = (params.world || "world-50m.json") + (params.refresh ? ("#" + Math.random()) : "");
         var names = (params.worldnames || "world-country-names.tsv") + (params.refresh ? ("#" + Math.random()) : "");
 
         queue()
-            .defer(d3.json, geo)
+            .defer(d3.json, topo)
             .defer(d3.json, world)
             .defer(d3.tsv, names)
             .await(ready);
@@ -312,16 +312,17 @@ var d3, queue, vis, params, topojson;
 
     vis.draw = function (params) {
         // make stuff here!
-        var params = params || {},
-            scale = params.scale || 600,
+        console.log("in draw, params: " + JSON.stringify(params));
+        var pars = params || {},
+            scale = pars.scale || 600,
             projection = d3.geo.albers()
                 .center([0, 55.4])
                 .rotate([4.4, 0])
                 .parallels([50, 60])
                 .scale(scale)
                 .translate([width / 2, height / 2]),
-
-            firs = topojson.feature(vis.firs, vis.firs.objects.firs),
+            fff = vis.firs.objects.FIRs_NM,
+            firs = topojson.feature(vis.firs, fff),
 
             tooltip = d3.select("#tooltip").classed("hidden", true),
             countryname = d3.select("#countryname"),
@@ -410,7 +411,7 @@ var d3, queue, vis, params, topojson;
 
         // intra FIR borders
         g.selectAll(".fir-boundary")
-            .data([topojson.mesh(vis.firs, vis.firs.objects.firs, function (a, b) {
+            .data([topojson.mesh(vis.firs, fff, function (a, b) {
                 return a !== b;
             })])
             .enter().insert("path", ".graticule")
@@ -419,7 +420,7 @@ var d3, queue, vis, params, topojson;
 
         // // // external borders
         g.selectAll("fir-boundary ECTRL")
-            .data([topojson.mesh(vis.firs, vis.firs.objects.firs, function (a, b) {
+            .data([topojson.mesh(vis.firs, fff, function (a, b) {
                 return a === b;
             })])
             .enter().insert("path", ".graticule")
@@ -427,26 +428,27 @@ var d3, queue, vis, params, topojson;
             .attr("class", "fir-boundary ECTRL");
 
 
-        // fabfirs.forEach(function (fab) {
-        //     g.insert("path", ".graticule")
-        //         .datum(topojson.merge(ectrlfirs, ectrlfirs.objects.firs.geometries.filter(function (d) {
-        //             if (fab.id === "FABEC") {
-        //                 console.log(d.id + (_.includes(fab.countryfirs, d.id) ? " " : " not ") + "included");
-        //             }
-        //             return _.includes(fab.countryfirs, d.id);
-        //         })))
-        //         .attr("class", "fab " + fab.id)
-        //         .attr("d", path)
-        //         .on("mouseover", function (d) {
-        //             d3.select(this).style("fill", "red");
-        //             tooltip.classed("hidden", false);
-        //             countryname.text(fab.name);
-        //         })
-        //         .on("mouseleave", function () {
-        //             d3.select(this).style("fill", "#ddc");
-        //             tooltip.classed("hidden", true);
-        //         });
-        // });
+        fabfirs.forEach(function (fab) {
+            g.insert("path", ".graticule")
+                .datum(topojson.merge(vis.firs, fff.geometries.filter(function (d) {
+                    if (fab.id === "FABEC") {
+                        console.log("id: " + d.id);
+                        console.log(d.id + (_.includes(fab.countryfirs, d.id) ? " " : " not ") + "included");
+                    }
+                    return _.includes(fab.countryfirs, d.id);
+                })))
+                .attr("class", "fab " + fab.id)
+                .attr("d", path)
+                .on("mouseover", function (d) {
+                    d3.select(this).style("fill", "red");
+                    tooltip.classed("hidden", false);
+                    countryname.text(fab.name);
+                })
+                .on("mouseleave", function () {
+                    d3.select(this).style("fill", "#ddc");
+                    tooltip.classed("hidden", true);
+                });
+        });
     };
 
 }());
